@@ -51,12 +51,9 @@ The project will follow the main phases of the Software Development Life Cycle:
 - Design a project that can be completed by a small development team
 
 ## Team Members
-| Team Member | Role |
+Team Member + Role
 
-| Bailey Nichols | Design/UI Lead |
-| Name | Project Coordinator |
-| Name | Requirements and Research Lead |
-| Name | Developer and Testing Lead |
+Bailey Nichols - Design/UI Lead | Name - Project Coordinator | Name - Requirements and Research Lead | Name - Developer and Testing Lead
 
 ## Project Status
 This project is currently in the project-selection and planning stage. Requirements, system designs, implementation, and testing will be completed in the future.
