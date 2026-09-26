@@ -6,16 +6,16 @@ Create the basic TechConnect user experience that allows users to access the app
 
 ### Sprint 1 Backlog
 
-- User Registration and Login
-- Browse Support Services
-- Choose Support Method
-- View Available Appointments
+- Create Account and Log In
+- Browse Technology-Support Services
+- View Appointment Availability
+- Schedule, Reschedule, or Cancel Appointments
 
 ## Project Board
 
 The TechConnect GitHub Project board is used to track work through:
 
-- Todo
+- Backlog
 - In Progress
 - Done
 
