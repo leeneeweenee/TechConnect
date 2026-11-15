@@ -23,6 +23,41 @@ const services = [
 function App() {
   const [page, setPage] = useState('home')
 
+const [appointments, setAppointments] = useState(() => {
+  try {
+    return JSON.parse(localStorage.getItem('techconnectAppointments') || '[]')
+  } catch {
+    return []
+  }
+})
+
+function handleBooking(event) {
+  event.preventDefault()
+
+  const formData = new FormData(event.currentTarget)
+
+  const newAppointment = {
+    id: crypto.randomUUID(),
+    name: formData.get('name'),
+    email: formData.get('email'),
+    service: formData.get('service'),
+    date: formData.get('date'),
+    issue: formData.get('issue'),
+    status: 'Requested',
+  }
+
+  const updatedAppointments = [...appointments, newAppointment]
+
+  setAppointments(updatedAppointments)
+  localStorage.setItem(
+    'techconnectAppointments',
+    JSON.stringify(updatedAppointments)
+  )
+
+  alert('Your appointment request has been saved!')
+  event.currentTarget.reset()
+}
+
   return (
     <div className="app">
       <header className="header">
@@ -89,21 +124,18 @@ function App() {
         <main className="content">
           <h1>Book Tech Support</h1>
           <p>Tell us how we can help you.</p>
-          <form className="booking-form" onSubmit={(event) => {
-            event.preventDefault()
-            alert('Your booking request has been received!')
-          }}>
+          <form className="booking-form" onSubmit={handleBooking}>
             <label>
               Full Name
-              <input type="text" required placeholder="Enter your name" />
+              <input type="text" name="name" required placeholder="Enter your name" />
             </label>
             <label>
               Email Address
-              <input type="email" required placeholder="Enter your email" />
+              <input type="email" name="email" required placeholder="Enter your email" />
             </label>
             <label>
               Select a Service
-              <select required defaultValue="">
+              <select name="service" required defaultValue="">
                 <option value="" disabled>Choose a service</option>
                 {services.map((service) => (
                   <option key={service.name} value={service.name}>
@@ -114,11 +146,11 @@ function App() {
             </label>
             <label>
               Preferred Date
-              <input type="date" required />
+              <input type="date" name="date" required />
             </label>
             <label>
               Describe Your Issue
-              <textarea placeholder="What do you need help with?" rows="4" />
+              <textarea name="issue" placeholder="What do you need help with?" rows="4" />
             </label>
             <button className="primary" type="submit">Submit Booking</button>
           </form>
