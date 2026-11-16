@@ -289,3 +289,45 @@ footer {
     animation: none !important;
   }
 }
+
+
+/* Appointment status styling */
+
+.appointment-status {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: #f7f7f7;
+  border-left: 4px solid #d1b18b;
+  border-radius: 8px;
+}
+
+.appointment-status p {
+  margin: 0;
+  color: #2d363c;
+  line-height: 1.6;
+}
+
+.appointment-status p + p {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #767b7f;
+}
+
+/* Requested appointment */
+.appointment-status.requested {
+  background-color: #f7f7f7;
+  border-left: 4px solid #d1b18b;
+}
+
+/* Confirmed appointment */
+.appointment-status.confirmed {
+  background-color: #edf5ef;
+  border-left: 4px solid #5b9470;
+}
+
+/* Canceled appointment */
+.appointment-status.canceled,
+.appointment-status.cancelled {
+  background-color: #f8eeee;
+  border-left: 4px solid #b36b6b;
+}
