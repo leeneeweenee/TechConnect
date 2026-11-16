@@ -46,8 +46,9 @@ const availability = [
 ]
 function App() {
   const [page, setPage] = useState('home')
+  const [reschedulingId, setReschedulingId] = useState(null)
 
-const [appointments, setAppointments] = useState(() => {
+  const [appointments, setAppointments] = useState(() => {
   try {
     return JSON.parse(localStorage.getItem('techconnectAppointments') || '[]')
   } catch {
@@ -159,6 +160,82 @@ function handleCancelRequest(appointmentId) {
     setAppointments(updatedAppointments)
   } catch {
     alert('Unable to save the cancellation. Please try again.')
+  }
+}
+
+function handleReschedule(event, appointmentId) {
+  event.preventDefault()
+
+  const formData = new FormData(event.currentTarget)
+  const newDate = formData.get('newDate')
+  const newTime = formData.get('newTime')
+
+  const appointment = appointments.find(
+    (item) => item.id === appointmentId
+  )
+
+  if (
+    !appointment ||
+    String(appointment.status).toLowerCase() !== 'requested'
+  ) {
+    alert('This appointment request cannot be rescheduled.')
+    return
+  }
+
+  const otherAppointments = appointments.filter(
+    (item) => item.id !== appointmentId
+  )
+
+  const duplicateRequest = otherAppointments.some((item) =>
+    item.providerId === appointment.providerId &&
+    item.date === newDate &&
+    item.time === newTime &&
+    ['requested', 'confirmed'].includes(
+      String(item.status).toLowerCase()
+    )
+  )
+
+  if (duplicateRequest) {
+    alert('This time already has an appointment request.')
+    return
+  }
+
+  const booking = {
+    serviceId: appointment.service,
+    providerId: appointment.providerId,
+    date: newDate,
+    time: newTime,
+  }
+
+  const result = validateBooking(
+    booking,
+    availability,
+    otherAppointments,
+    { id: 'demo-resident', role: 'resident' }
+  )
+
+  if (!result.valid) {
+    alert(result.error)
+    return
+  }
+
+  const updatedAppointments = appointments.map((item) =>
+    item.id === appointmentId
+      ? { ...item, date: newDate, time: newTime }
+      : item
+  )
+
+  try {
+    localStorage.setItem(
+      'techconnectAppointments',
+      JSON.stringify(updatedAppointments)
+    )
+
+    setAppointments(updatedAppointments)
+    setReschedulingId(null)
+    alert('Your appointment request has been rescheduled!')
+  } catch {
+    alert('Unable to save the new appointment time.')
   }
 }
 
@@ -378,6 +455,77 @@ function handleCancelRequest(appointmentId) {
                         Cancel Request
                       </button>
                     )}
+                    {String(appointment.status).toLowerCase() === 'requested' && (
+                       <button
+                          type="button"
+                          className="secondary"
+                          onClick={() =>
+                            setReschedulingId(
+                              reschedulingId === appointment.id ? null : appointment.id
+                            )
+                          }
+                        >
+                          {reschedulingId === appointment.id
+                            ? 'Close Rescheduling'
+                            : 'Reschedule Request'}
+                        </button>
+                    )}
+                    {reschedulingId === appointment.id && (                    
+                      <form
+                        className="booking-form"
+                        onSubmit={(event) => handleReschedule(event, appointment.id)}
+                      >
+                        <h4>Choose a New Appointment Time</h4>
+                        <label>
+                          New Date
+                          <input
+                            type="date"
+                            name="newDate"
+                            required
+                            defaultValue={appointment.date}
+                          />
+                        </label>
+
+                        <label>
+                          New Time
+                          <select
+                            name="newTime"
+                            required
+                            defaultValue={appointment.time || ''}
+                          >
+                            <option value="" disabled>
+                              Choose a time
+                            </option>
+
+                            {[
+                              '09:00', '09:30',
+                              '10:00', '10:30',
+                              '11:00', '11:30',
+                              '12:00', '12:30',
+                              '13:00', '13:30',
+                              '14:00', '14:30',
+                              '15:00', '15:30',
+                              '16:00', '16:30',
+                            ].map((time) => (
+                              <option key={time} value={time}>
+                                {new Date(`2000-01-01T${time}:00`).toLocaleTimeString(
+                                  'en-US',
+                                  {
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                  }
+                                )}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <button className="primary" type="submit">
+                          Save New Appointment Time
+                        </button>
+                      </form>
+                    )}
+
                 </article>
               ))}
             </div>
