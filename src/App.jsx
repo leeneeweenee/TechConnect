@@ -127,6 +127,41 @@ function handleBooking(event) {
   event.currentTarget.reset()
 }
 
+function handleCancelRequest(appointmentId) {
+  const confirmed = window.confirm(
+    'Are you sure you want to cancel this appointment request?'
+  )
+
+  if (!confirmed) {
+    return
+  }
+
+  const updatedAppointments = appointments.map((appointment) => {
+    if (
+      appointment.id === appointmentId &&
+      String(appointment.status).toLowerCase() === 'requested'
+    ) {
+      return {
+        ...appointment,
+        status: 'Canceled',
+      }
+    }
+
+    return appointment
+  })
+
+  try {
+    localStorage.setItem(
+      'techconnectAppointments',
+      JSON.stringify(updatedAppointments)
+    )
+
+    setAppointments(updatedAppointments)
+  } catch {
+    alert('Unable to save the cancellation. Please try again.')
+  }
+}
+
   return (
     <div className="app">
       <header className="header">
@@ -303,7 +338,7 @@ function handleBooking(event) {
                         })
                       : 'Not selected'}
                   </p>
-                  <p>
+
                     <div 
                       className={`appointment-status ${String(
                         appointment.status || ''
@@ -334,7 +369,15 @@ function handleBooking(event) {
                         </p>
                       )}
                     </div>
-</p>
+                    {String(appointment.status).toLowerCase() === 'requested' && (
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => handleCancelRequest(appointment.id)}
+                      >
+                        Cancel Request
+                      </button>
+                    )}
                 </article>
               ))}
             </div>
