@@ -30,7 +30,7 @@ const providers = [
     name: 'Tech Support Specialist 2',
   },
 ]
-const availability = [
+const initialAvailability = [
   {
     providerId: 'provider-001',
     date: '2026-12-01',
@@ -44,10 +44,18 @@ const availability = [
     endTime: '12:00',
   },
 ]
+
 function App() {
   const [page, setPage] = useState('home')
   const [reschedulingId, setReschedulingId] = useState(null)
-
+  const [availability, setAvailability] = useState(() => {
+    try {
+      const saved = localStorage.getItem('techconnectAvailability')
+      return saved ? JSON.parse(saved) : initialAvailability
+    } catch {
+      return initialAvailability
+    }
+  })
   const [appointments, setAppointments] = useState(() => {
   try {
     return JSON.parse(localStorage.getItem('techconnectAppointments') || '[]')
@@ -239,6 +247,79 @@ function handleReschedule(event, appointmentId) {
   }
 }
 
+function handleSaveAvailability(event) {
+  event.preventDefault()
+
+  const formData = new FormData(event.currentTarget)
+
+  const providerId = formData.get('providerId')
+  const date = formData.get('date')
+  const startTime = formData.get('startTime')
+  const endTime = formData.get('endTime')
+
+  const validTime = /^([01]\d|2[0-3]):(00|30)$/
+
+  if (
+    !providers.some((provider) => provider.id === providerId) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(date)
+  ) {
+    alert('Please select a valid provider and date.')
+    return
+  }
+
+  if (!validTime.test(startTime) || !validTime.test(endTime)) {
+    alert('Availability must begin and end on the hour or half-hour.')
+    return
+  }
+
+  const toMinutes = (time) => {
+    const [hours, minutes] = time.split(':').map(Number)
+    return hours * 60 + minutes
+  }
+
+  const start = toMinutes(startTime)
+  const end = toMinutes(endTime)
+
+  if (end - start < 30) {
+    alert('Availability must be at least 30 minutes long.')
+    return
+  }
+
+  const overlaps = availability.some((slot) => {
+    if (slot.providerId !== providerId || slot.date !== date) {
+      return false
+    }
+
+    return (
+      start < toMinutes(slot.endTime) &&
+      end > toMinutes(slot.startTime)
+    )
+  })
+
+  if (overlaps) {
+    alert('This provider already has availability during these hours.')
+    return
+  }
+
+  const updatedAvailability = [
+    ...availability,
+    { providerId, date, startTime, endTime },
+  ]
+
+  try {
+    localStorage.setItem(
+      'techconnectAvailability',
+      JSON.stringify(updatedAvailability)
+    )
+
+    setAvailability(updatedAvailability)
+    event.currentTarget.reset()
+    alert('Provider availability saved!')
+  } catch {
+    alert('Unable to save availability. Please try again.')
+  }
+}
+
   return (
     <div className="app">
       <header className="header">
@@ -248,6 +329,7 @@ function handleReschedule(event, appointmentId) {
           <button onClick={() => setPage('services')}>Services</button>
           <button onClick={() => setPage('booking')}>Book Support</button>
           <button onClick={() => setPage('appointments')}>My Appointments</button>
+          <button onClick={() => setPage('provider')}>Provider Dashboard</button>
         </nav>
       </header>
 
@@ -532,6 +614,113 @@ function handleReschedule(event, appointmentId) {
           )}
         </main>
       )}
+
+{page === 'provider' && (
+  <main className="content">
+    <h1>Provider Dashboard</h1>
+    <p>
+      View technology-support providers and their
+      available appointment schedules.
+    </p>
+
+<section className="availability-management">
+  <h2>Manage Availability</h2>
+  <p>Add available appointment hours for a provider.</p>
+
+  <form 
+  className="booking-form"
+  onSubmit={handleSaveAvailability}
+  >
+    <label>
+      Select Provider
+      <select name="providerId" required defaultValue="">
+        <option value="" disabled>
+          Choose a provider
+        </option>
+        {providers.map((provider) => (
+          <option key={provider.id} value={provider.id}>
+            {provider.name}
+          </option>
+        ))}
+      </select>
+    </label>
+
+    <label>
+      Available Date
+      <input type="date" name="date" required />
+    </label>
+
+    <label>
+      Start Time
+      <input type="time" name="startTime" step="1800" required />
+    </label>
+
+    <label>
+      End Time
+      <input type="time" name="endTime" step="1800" required />
+    </label>
+
+    <button className="primary" type="submit">
+      Save Availability
+    </button>
+  </form>
+</section>
+
+    <div className="services">
+      {providers.map((provider) => (
+        <article className="service-card" key={provider.id}>
+          <h3>{provider.name}</h3>
+
+          <h4>Available Hours</h4>
+
+          {availability
+            .filter((slot) => slot.providerId === provider.id)
+            .map((slot) => (
+              <div key={`${slot.providerId}-${slot.date}`}>
+                <p>
+                  <strong>Date:</strong> {slot.date}
+                </p>
+                <p>
+                  <strong>Hours:</strong>{' '}
+                  {slot.startTime} - {slot.endTime}
+                </p>
+              </div>
+            ))}
+
+            <h4>Assigned Appointment Requests</h4>
+
+            {appointments.filter(
+              (appointment) => appointment.providerId === provider.id
+            ).length === 0 ? (
+              <p>No appointment requests assigned.</p>
+            ) : (
+              appointments
+                .filter((appointment) => appointment.providerId === provider.id)
+                .map((appointment) => (
+                  <div
+                    key={appointment.id}
+                    className="appointment-status"
+                  >
+                    <p>
+                      <strong>Service:</strong> {appointment.service}
+                    </p>
+                    <p>
+                      <strong>Date:</strong> {appointment.date}
+                    </p>
+                    <p>
+                      <strong>Time:</strong> {appointment.time || 'Not selected'}
+                    </p>
+                    <p>
+                      <strong>Status:</strong> {appointment.status}
+                    </p>
+                  </div>
+                ))
+            )}
+        </article>
+      ))}
+    </div>
+  </main>
+)}
 
       <footer>© 2026 TechConnect. Technology made approachable.</footer>
     </div>
